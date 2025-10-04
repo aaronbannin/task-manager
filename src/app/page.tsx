@@ -66,12 +66,20 @@ export default function HomePage() {
     setLoadingBoards(false);
   };
 
-  // Effect to fetch boards once session is confirmed and not loading
+  // Effect to handle redirection to the first board once boards are loaded and a session exists
   useEffect(() => {
-    if (session && !loadingSession) {
-      fetchUserBoards();
+    // Only redirect if a session exists, boards are loaded, and there's at least one board,
+    // AND we are currently on the root path to avoid redirect loops if we are already on a board page.
+    if (
+      session &&
+      !loadingSession &&
+      !loadingBoards &&
+      boards.length > 0 &&
+      router.pathname === "/"
+    ) {
+      router.replace(`/boards/${boards[0].id}`); // Use replace to avoid adding to history
     }
-  }, [session, loadingSession]); // Re-run when session or its loading status changes
+  }, [session, loadingSession, loadingBoards, boards, router]);
 
   // Handler for creating a new board
   const handleCreateBoard = async () => {
@@ -108,48 +116,40 @@ export default function HomePage() {
     return <AuthForm />;
   }
 
-  // If the user is logged in, render the main application layout
-  const firstBoard = boards.length > 0 ? boards[0] : null; // Get the first board to display as default content
-  const displayBoardContent = firstBoard && !loadingBoards;
+  // If the user is logged in, perform further checks
+  // At this point, session exists, and loadingSession is false.
 
+  if (loadingBoards) {
+    // Show a loading indicator while fetching boards if session exists
+    return (
+      <div className="flex min-h-[calc(100vh-64px)] items-center justify-center">
+        <p>Loading your boards...</p>
+      </div>
+    );
+  }
+
+  // If boards are loaded and there's at least one board, the useEffect above should trigger a redirect.
+  // We show a "Redirecting..." message while waiting for that to happen.
+  if (boards.length > 0) {
+    return (
+      <div className="flex min-h-[calc(100vh-64px)] items-center justify-center">
+        <p>Redirecting to your board...</p>
+      </div>
+    );
+  }
+
+  // If user is logged in, boards are loaded, but no boards exist (boards.length === 0)
   return (
     <div className="flex h-[calc(100vh-64px)]">
-      {" "}
-      {/* Assumes Toolbar is 64px tall */}
-      {/* The BoardsSidebar component is rendered here when logged in */}
-      <BoardsSidebar /> {/* This component currently fetches its own data */}
+      <BoardsSidebar />
       <main className="flex-1 overflow-auto p-6">
-        {loadingBoards ? (
-          // Show loading indicator while fetching boards for display
-          <div className="flex h-full items-center justify-center">
-            <p>Loading your boards...</p>
-          </div>
-        ) : displayBoardContent ? (
-          // If boards exist, display the content of the first board
-          <div>
-            <h1 className="mb-6 text-3xl font-bold">{firstBoard?.name}</h1>
-            {/* Placeholder for the selected board's content */}
-            <div className="rounded-lg bg-white p-4 shadow dark:bg-gray-800">
-              <p>
-                This is the content for board:{" "}
-                <span className="font-semibold">{firstBoard?.name}</span> (ID: {firstBoard?.id}).
-              </p>
-              <p>
-                Here you would display the tasks for this board (e.g., To Do, In Progress, Done
-                columns).
-              </p>
-            </div>
-          </div>
-        ) : (
-          // If no boards exist for the logged-in user, prompt to create one
-          <div className="flex h-full flex-col items-center justify-center text-gray-500">
-            <p className="mb-4 text-xl">You don't have any boards yet.</p>
-            <Button onClick={handleCreateBoard} className="flex items-center gap-2">
-              <PlusCircle className="h-4 w-4" />
-              Create Your First Board
-            </Button>
-          </div>
-        )}
+        <div className="flex h-full flex-col items-center justify-center text-gray-500">
+          <p className="mb-4 text-xl">You do not have any boards yet.</p>
+          <Button onClick={handleCreateBoard} className="flex items-center gap-2">
+            <PlusCircle className="h-4 w-4" />
+            Create Your First Board
+          </Button>
+        </div>
       </main>
     </div>
   );
