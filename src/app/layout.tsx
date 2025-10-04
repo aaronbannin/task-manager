@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Toolbar from "@/components/ui/toolbar/Toolbar";
-import BoardsSidebar from "@/components/boards/BoardsSidebar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,12 +27,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Toolbar />
-        <div className="flex h-[calc(100vh-64px)]">
-          {" "}
-          {/* Adjusted height to account for toolbar */}
-          <BoardsSidebar />
-          <main className="flex-1 overflow-auto p-6">{children}</main>
-        </div>
+        {children}
       </body>
     </html>
   );
