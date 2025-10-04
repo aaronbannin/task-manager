@@ -33,11 +33,11 @@ export default function Toolbar() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.push("/login");
+    router.push("/");
   };
 
   return (
-    <nav className="bg-gray-800 p-4 text-white flex justify-between items-center">
+    <nav className="flex items-center justify-between bg-gray-800 p-4 text-white">
       <Link href="/" className="text-xl font-bold">
         Task Manager
       </Link>
