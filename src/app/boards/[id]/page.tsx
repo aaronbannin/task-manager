@@ -5,11 +5,7 @@ import { useParams } from "next/navigation";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import BoardsSidebar from "@/components/boards/BoardsSidebar"; // Assuming BoardsSidebar is in this path
 import { notFound } from "next/navigation";
-
-interface Board {
-  id: string;
-  name: string;
-}
+import { Board } from "@/types/manual";
 
 export default function BoardPage() {
   const params = useParams();

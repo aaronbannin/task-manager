@@ -7,11 +7,8 @@ import AuthForm from "@/components/auth/AuthForm";
 import BoardsSidebar from "@/components/boards/BoardsSidebar";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
-
-interface Board {
-  id: string;
-  name: string;
-}
+// import { Database } from "@/types/dbTypes";
+import { Board } from "@/types/manual";
 
 export default function HomePage() {
   const [session, setSession] = useState<any>(null); // State to hold user session

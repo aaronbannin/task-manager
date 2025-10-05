@@ -7,7 +7,8 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
-    "lint:fix": "eslint"
+    "lint:fix": "eslint",
+    "types": "supabase gen types --db-url postgresql://postgres:postgres@127.0.0.1:54322/postgres --lang typescript --schema public > src/dbTypes.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
