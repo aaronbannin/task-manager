@@ -6,10 +6,12 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import BoardsSidebar from "@/components/boards/BoardsSidebar"; // Assuming BoardsSidebar is in this path
 import { notFound } from "next/navigation";
 import { Board } from "@/types/manual";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function BoardPage() {
   const params = useParams();
-  const boardId = params.id as string;
+  const boardId = params && typeof params.id === "string" ? params.id : undefined;
   const [board, setBoard] = useState<Board | null>(null);
   const [loadingBoard, setLoadingBoard] = useState(true);
   const supabase = createClientComponentClient();
@@ -24,7 +26,7 @@ export default function BoardPage() {
       setLoadingBoard(true);
       const { data, error } = await supabase
         .from("boards")
-        .select("id, name")
+        .select("id, name, description")
         .eq("id", boardId)
         .single(); // Use .single() to get a single record
 
@@ -59,8 +61,32 @@ export default function BoardPage() {
       <BoardsSidebar />
       <main className="flex-1 overflow-auto p-6">
         <h1 className="mb-4 text-2xl font-bold">Board: {board?.name}</h1>
-        {/* Content for the specific board will go here */}
-        <p>Welcome to board "{board?.name}"! Here you will see tasks.</p>
+        <div className="mb-6">
+          <Button size="icon" className="h-10 w-10 text-2xl font-bold">
+            +
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4">
+          <Card className="flex-1">
+            <CardHeader>
+              <CardTitle>To Do</CardTitle>
+            </CardHeader>
+            {/* To Do tasks will be rendered here */}
+          </Card>
+          <Card className="flex-1">
+            <CardHeader>
+              <CardTitle>In Progress</CardTitle>
+            </CardHeader>
+            {/* In Progress tasks will be rendered here */}
+          </Card>
+          <Card className="flex-1">
+            <CardHeader>
+              <CardTitle>Done</CardTitle>
+            </CardHeader>
+            {/* Done tasks will be rendered here */}
+          </Card>
+        </div>
       </main>
     </div>
   );
