@@ -8,6 +8,7 @@ import { notFound } from "next/navigation";
 import { Board } from "@/types/manual";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { createTask, updateTask } from "@/lib/tasks"; // Import the functions
 
 export default function BoardPage() {
   const params = useParams();
@@ -62,7 +63,13 @@ export default function BoardPage() {
       <main className="flex-1 overflow-auto p-6">
         <h1 className="mb-4 text-2xl font-bold">Board: {board?.name}</h1>
         <div className="mb-6">
-          <Button size="icon" className="h-10 w-10 text-2xl font-bold">
+          <Button
+            size="icon"
+            onClick={() =>
+              boardId && createTask("New Task", "This is a new task description.", "To Do", boardId)
+            }
+            className="h-10 w-10 text-2xl font-bold"
+          >
             +
           </Button>
         </div>
