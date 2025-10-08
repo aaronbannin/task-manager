@@ -1,0 +1,144 @@
+# ===============================================
+# Project Rules for AI Coding Agents / LLMs
+# ===============================================
+
+project:
+  name: Task Manager
+
+# ===============================================
+# Framework & Conventions
+# ===============================================
+
+framework:
+  - Next.js 15 with App Router (src/app/)
+  - Use React Server Components where appropriate
+  - Client components must declare `"use client"`
+  - TypeScript for all code (no .js files)
+  - Follow functional component patterns
+
+styling:
+  - Use Tailwind CSS for styling
+  - Use `cn` helper from `class-variance-authority` or `clsx` for class merging
+  - Avoid inline styles unless absolutely necessary
+  - Use shadcn/ui components for UI consistency
+  - Do not modify shadcn-generated components directly; extend via composition or wrappers
+
+components:
+  - All reusable components in `src/components/`
+  - Co-locate small or route-specific components in the route folder
+  - Always type props with interfaces or `zod` schemas where applicable
+  - Prefer `React.FC<Props>` with explicit prop types
+  - Always export components as named exports unless default is required by Next.js routing
+
+# ===============================================
+# Data & Backend Rules
+# ===============================================
+
+backend:
+  - Supabase is the only backend (auth, database, storage)
+  - Use `@supabase/auth-helpers-nextjs` for session management
+  - Never expose private API keys in client components
+  - Access Supabase client via centralized util (e.g., `lib/supabaseClient.ts`)
+  - All API routes must be in `src/app/api/.../route.ts`
+  - Use edge runtime where possible (`export const runtime = 'edge'`)
+
+validation:
+  - Use `zod` for schema validation (forms, API payloads, etc.)
+  - All API endpoints must validate input/output using zod
+
+forms:
+  - Use `react-hook-form` for all forms
+  - Integrate with zod resolver from `@hookform/resolvers/zod`
+  - Handle form errors gracefully and accessibly
+
+# ===============================================
+# Architecture & Structure
+# ===============================================
+
+structure:
+  - Root dir: `src/`
+  - Pages & routes: `src/app/`
+  - Components: `src/components/`
+  - Libs & utils: `src/lib/`
+  - Hooks: `src/hooks/`
+  - Types: `src/types/`
+  - Styles: `src/styles/`
+  - Keep imports relative to `@/` alias
+
+routing:
+  - Use Next.js App Router conventions (`layout.tsx`, `page.tsx`, etc.)
+  - Dynamic routes: `[slug]/page.tsx`
+  - Avoid legacy `pages/` directory
+
+# ===============================================
+# State Management & React
+# ===============================================
+
+react:
+  - Use React 19 idioms (hooks, concurrent features)
+  - Use `useState`, `useEffect`, and `useOptimistic` correctly
+  - Avoid context abuse; prefer hooks
+  - No class components
+  - Use Suspense and Server Actions when appropriate
+
+state:
+  - Use React state or Supabase data fetches
+  - Avoid unnecessary client-side global state libraries unless justified
+
+# ===============================================
+# Linting & Code Style
+# ===============================================
+
+linting:
+  - Follow ESLint + Prettier defaults
+  - Run `eslint . --fix` before commit
+  - Type-safe imports only (no `any` unless justified)
+  - Prefer async/await over promises
+  - Use descriptive variable and function names
+
+# ===============================================
+# AI / LLM Agent Guidance
+# ===============================================
+
+llm_guidelines:
+  - Always prefer code clarity over brevity
+  - When creating new files, use existing structure and naming conventions
+  - Never modify `.rules` file itself
+  - Validate TypeScript types after generation
+  - Avoid creating unnecessary abstractions or premature optimizations
+  - When writing UI, use shadcn/ui components and Tailwind utilities
+  - Keep accessibility (ARIA, keyboard nav) in mind for interactive elements
+  - Prefer server actions over client fetches when possible
+  - Generate code compatible with React 19 and Next.js 15 App Router
+
+# ===============================================
+# Example File Conventions
+# ===============================================
+
+examples:
+  - components: `src/components/ui/Button.tsx`
+  - pages: `src/app/dashboard/page.tsx`
+  - API route: `src/app/api/users/route.ts`
+  - Supabase client: `src/lib/supabaseClient.ts`
+  - zod schema: `src/lib/validators/userSchema.ts`
+  - hook: `src/hooks/useUser.ts`
+  - util: `src/lib/utils.ts`
+
+# ===============================================
+# Security & Deployment
+# ===============================================
+
+security:
+  - Never log sensitive user data
+  - Sanitize inputs
+  - Use environment variables via Next.js conventions (`process.env.NEXT_PUBLIC_*`)
+  - Validate all Supabase payloads
+
+deployment:
+  - Compatible with Vercel edge runtime
+  - No custom webpack configs unless necessary
+  - Ensure all environment variables are set in `.env.local`
+
+# ===============================================
+# End of File
+# ===============================================

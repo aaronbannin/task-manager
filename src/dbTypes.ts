@@ -195,12 +195,14 @@ export type CompositeTypes<
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    ? DefaultSchema[\"CompositeTypes\"][PublicCompositeTypeNameOrOptions]
     : never
+
+export type Board = Tables<'boards'>;
+export type Task = Tables<'tasks'>;
 
 export const Constants = {
   public: {
     Enums: {},
   },
 } as const
-

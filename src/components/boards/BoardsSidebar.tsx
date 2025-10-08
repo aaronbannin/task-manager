@@ -20,7 +20,6 @@ export default function BoardsSidebar() {
 
   useEffect(() => {
     fetchBoards();
-    return () => {};
   }, []);
 
   const fetchBoards = async () => {
