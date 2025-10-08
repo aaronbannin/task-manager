@@ -1,103 +1,131 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import AuthForm from "@/components/auth/AuthForm";
+import BoardsSidebar from "@/components/boards/BoardsSidebar";
+import { Button } from "@/components/ui/button";
+import { PlusCircle } from "lucide-react";
+// import { Database } from "@/types/dbTypes";
+import { Board } from "@/types/manual";
+
+export default function HomePage() {
+  const [session, setSession] = useState<any>(null); // State to hold user session
+  const [loadingSession, setLoadingSession] = useState(true); // Loading state for initial session check
+  const [boards, setBoards] = useState<Board[]>([]); // Boards fetched for this page\'s content logic
+  const [loadingBoards, setLoadingBoards] = useState(false); // Loading state for boards data
+  const router = useRouter();
+  const supabase = createClientComponentClient();
+
+  // Effect to manage user session
+  useEffect(() => {
+    const getSession = async () => {
+      const {
+        data: { session: currentSession },
+      } = await supabase.auth.getSession();
+      setSession(currentSession);
+      setLoadingSession(false);
+    };
+
+    getSession();
+
+    // Set up real-time listener for auth state changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      setSession(currentSession);
+      if (currentSession) {
+        fetchUserBoards(); // Fetch boards when a session is established
+      } else {
+        setBoards([]);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase.auth]); // Dependency array includes supabase.auth to ensure listener is correctly managed
+
+  // Function to fetch user's boards
+  const fetchUserBoards = async () => {
+    setLoadingBoards(true);
+    const { data, error } = await supabase
+      .from("boards")
+      .select("id, name")
+      .order("created_at", { ascending: true });
+    if (error) {
+      console.error("Error fetching user boards on homepage:", error);
+      setBoards([]);
+    } else {
+      setBoards(data || []);
+    }
+    setLoadingBoards(false);
+  };
+
+  // Handler for creating a new board
+  const handleCreateBoard = async () => {
+    const newBoardName = prompt("Enter the name for the new board:");
+    if (newBoardName && newBoardName.trim() !== "") {
+      const { data, error } = await supabase
+        .from("boards")
+        .insert([{ name: newBoardName.trim() }])
+        .select();
+
+      if (error) {
+        console.error("Error creating board:", error);
+      } else {
+        // Re-fetch boards to update the current page\'s display
+        fetchUserBoards();
+        // Note: BoardsSidebar, if it uses its own real-time listener, will also update automatically.
+      }
+    }
+  };
+
+  // --- Conditional Rendering Logic ---
+
+  if (loadingSession) {
+    // Show a loading indicator while checking the session
+    return (
+      <div className="flex min-h-[calc(100vh-64px)] items-center justify-center">
+        <p>Loading application...</p>
+      </div>
+    );
+  }
+
+  if (!session) {
+    // If no session, show the authentication form
+    return <AuthForm />;
+  }
+
+  // If the user is logged in, perform further checks
+  // At this point, session exists, and loadingSession is false.
+
+  // If user is logged in, render the main application layout
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
+    <div className="flex h-[calc(100vh-64px)]">
+      <BoardsSidebar />
+      <main className="flex-1 overflow-auto p-6">
+        {loadingBoards ? (
+          <div className="flex h-full items-center justify-center">
+            <p>Loading your boards...</p>
+          </div>
+        ) : boards.length > 0 ? (
+          <div className="flex h-full flex-col items-center justify-center text-gray-500">
+            <p className="mb-4 text-xl">Select a board from the sidebar to view its tasks.</p>
+            <p className="text-sm">
+              Or create a new board if you don't see what you're looking for.
+            </p>
+          </div>
+        ) : (
+          // boards.length === 0
+          <div className="flex h-full flex-col items-center justify-center text-gray-500">
+            <p className="mb-4 text-xl">You do not have any boards yet.</p>
+            <Button onClick={handleCreateBoard} className="flex items-center gap-2">
+              <PlusCircle className="h-4 w-4" />
+              Create Your First Board
+            </Button>
+          </div>
+        )}
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }
