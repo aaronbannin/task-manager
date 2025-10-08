@@ -8,7 +8,51 @@ import { notFound } from "next/navigation";
 import { Board, Task } from "@/dbTypes";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { createTask } from "@/lib/tasks";
+import { createTask, updateTask } from "@/lib/tasks";
+
+import {
+  DndContext,
+  closestCorners,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
+// Draggable Task Component
+function DraggableTask({ task }: { task: Task }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: task.id,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 100 : "auto",
+    opacity: isDragging ? 0.8 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="mb-2 cursor-grab rounded-md bg-gray-100 p-3 shadow-sm active:shadow-md"
+    >
+      <h3 className="font-semibold">{task.title}</h3>
+      <p className="text-sm text-gray-600">{task.description}</p>
+    </div>
+  );
+}
 
 export default function BoardPage() {
   const params = useParams();
@@ -18,6 +62,13 @@ export default function BoardPage() {
   const [loadingBoard, setLoadingBoard] = useState(true);
   const [loadingTasks, setLoadingTasks] = useState(true);
   const supabase = createClientComponentClient();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   useEffect(() => {
     const fetchBoardAndTasks = async () => {
@@ -41,7 +92,7 @@ export default function BoardPage() {
         console.error("Error fetching board:", boardError);
         setBoard(null);
       } else {
-        setBoard(boardData as Board); // Cast to Board type
+        setBoard(boardData as Board);
       }
 
       // Fetch tasks
@@ -62,6 +113,30 @@ export default function BoardPage() {
 
     fetchBoardAndTasks();
   }, [boardId, supabase]);
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over) return;
+
+    if (active.id !== over.id) {
+      setTasks((items) => {
+        const activeTask = items.find((item) => item.id === active.id);
+        const newStatus = over.id as Task["status"]; // Assuming over.id is the new status column
+
+        if (activeTask && activeTask.status !== newStatus) {
+          // Update the task status locally
+          const updatedTasks = items.map((task) =>
+            task.id === active.id ? { ...task, status: newStatus } : task
+          );
+          // Persist the change to the database
+          updateTask(activeTask.id, { status: newStatus }); // Removed boardId
+          return updatedTasks;
+        }
+        return items;
+      });
+    }
+  };
 
   if (loadingBoard || loadingTasks) {
     return (
@@ -96,47 +171,58 @@ export default function BoardPage() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
-          <Card className="flex-1">
-            <CardHeader>
-              <CardTitle>To Do</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {toDoTasks.map((task) => (
-                <div key={task.id} className="mb-2 rounded-md bg-gray-100 p-3">
-                  <h3 className="font-semibold">{task.title}</h3>
-                  <p className="text-sm text-gray-600">{task.description}</p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-          <Card className="flex-1">
-            <CardHeader>
-              <CardTitle>In Progress</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {inProgressTasks.map((task) => (
-                <div key={task.id} className="mb-2 rounded-md bg-gray-100 p-3">
-                  <h3 className="font-semibold">{task.title}</h3>
-                  <p className="text-sm text-gray-600">{task.description}</p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-          <Card className="flex-1">
-            <CardHeader>
-              <CardTitle>Done</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {doneTasks.map((task) => (
-                <div key={task.id} className="mb-2 rounded-md bg-gray-100 p-3">
-                  <h3 className="font-semibold">{task.title}</h3>
-                  <p className="text-sm text-gray-600">{task.description}</p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
+        <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
+          <div className="grid grid-cols-3 gap-4">
+            <Card className="flex-1">
+              <CardHeader>
+                <CardTitle>To Do</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <SortableContext
+                  items={toDoTasks.map((task) => task.id)}
+                  strategy={verticalListSortingStrategy}
+                  id="To Do"
+                >
+                  {toDoTasks.map((task) => (
+                    <DraggableTask key={task.id} task={task} />
+                  ))}
+                </SortableContext>
+              </CardContent>
+            </Card>
+            <Card className="flex-1">
+              <CardHeader>
+                <CardTitle>In Progress</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <SortableContext
+                  items={inProgressTasks.map((task) => task.id)}
+                  strategy={verticalListSortingStrategy}
+                  id="In Progress"
+                >
+                  {inProgressTasks.map((task) => (
+                    <DraggableTask key={task.id} task={task} />
+                  ))}
+                </SortableContext>
+              </CardContent>
+            </Card>
+            <Card className="flex-1">
+              <CardHeader>
+                <CardTitle>Done</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <SortableContext
+                  items={doneTasks.map((task) => task.id)}
+                  strategy={verticalListSortingStrategy}
+                  id="Done"
+                >
+                  {doneTasks.map((task) => (
+                    <DraggableTask key={task.id} task={task} />
+                  ))}
+                </SortableContext>
+              </CardContent>
+            </Card>
+          </div>
+        </DndContext>
       </main>
     </div>
   );

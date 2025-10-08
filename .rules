@@ -23,6 +23,13 @@ styling:
   - Use shadcn/ui components for UI consistency
   - Do not modify shadcn-generated components directly; extend via composition or wrappers
 
+drag_and_drop:
+  - Use `@dnd-kit/core`, `@dnd-kit/sortable`, and `@dnd-kit/utilities` for drag and drop functionality.
+  - Wrap draggable areas with `DndContext`.
+  - Utilize `useSortable` hook for individual sortable items within a `SortableContext`.
+  - Implement `onDragEnd` to handle state updates and persist changes to the backend (Supabase).
+  - Configure `DndContext` with appropriate sensors (e.g., `PointerSensor`, `KeyboardSensor`).
+
 components:
   - All reusable components in `src/components/`
   - Co-locate small or route-specific components in the route folder
