@@ -20,18 +20,7 @@ export default function BoardsSidebar() {
 
   useEffect(() => {
     fetchBoards();
-
-    const channel = supabase
-      .channel("boards_realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "boards" }, (payload) => {
-        console.log("Change received!", payload);
-        fetchBoards(); // Re-fetch boards on any change
-      })
-      .subscribe();
-
-    return () => {
-      channel.unsubscribe();
-    };
+    return () => {};
   }, []);
 
   const fetchBoards = async () => {

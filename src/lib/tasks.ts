@@ -10,12 +10,14 @@ export const createTask = async (
   boardId: string
 ) => {
   try {
-    const { data, error } = await supabase.from("tasks").insert({
+    const taskData = {
       title,
       description,
       status,
-      boardId,
-    }).select(); // Added select() to return the created data
+      board_id: boardId,
+    };
+    console.log("Attempting to create task with data:", taskData);
+    const { data, error } = await supabase.from("tasks").insert(taskData).select(); // Added select() to return the created data
 
     if (error) {
       console.error("Error creating task:", error);
